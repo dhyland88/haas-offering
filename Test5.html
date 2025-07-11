@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hensel Phelps | HaaS Offering</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals & Construction Accents -->
+    <!-- Application Structure Plan: The SPA is designed as a single-page interactive dashboard. It starts with an introduction, followed by the main interactive element: a "Term & Benefits Calculator." This allows users to select a term length, a hardware type, and see the corresponding training hours and monthly price update in real-time on a bar chart and text display. This active engagement is more effective than a static list. Following this, key features are presented in a visually distinct card grid ("The Blueprint") for scannability. Important policy details like insurance are housed in a separate, clearly marked "Considerations" section to ensure they are noticed. A new "Explore Our Hardware Fleet" section has been added to showcase various hardware options in a card-based layout, enhancing product discoverability. A "Software Ecosystem" section with a prominent link to FieldLink's YouTube channel has been added to highlight the primary software. Finally, a "Place Your Order" section with a direct link to a Google Sheet form has been added to facilitate customer orders. This structure guides the user from interactive discovery to detailed information, improving comprehension and engagement. -->
+    <!-- Visualization & Content Choices: 1. Term Lengths/Training Hours/Pricing -> Goal: Compare/Inform -> Viz: Interactive buttons + dynamic bar chart + dropdown for hardware selection + dynamic text display for price -> Interaction: User clicks a term button and selects a hardware type, which updates the chart to highlight the selected term's training hours and updates summary text blocks for training and price. -> Justification: Transforms static data points into an engaging, cause-and-effect experience. The chart provides instant visual comparison of the benefit scaling, and the pricing updates dynamically with selections. -> Library: Chart.js, Vanilla JS. 2. Key Features (Hot Swap, etc.) -> Goal: Inform/Organize -> Viz: A grid of cards with icons (Unicode) and text. -> Interaction: Subtle hover effects. -> Justification: Breaks down a list into visually separate, digestible chunks, improving readability. -> Library/Method: HTML/Tailwind. 3. Insurance Info -> Goal: Inform (Emphasize) -> Viz: A distinctly styled callout box. -> Interaction: None. -> Justification: Visual separation makes this critical policy information stand out. -> Library: HTML/Tailwind. 4. Hardware Options -> Goal: Inform/Organize/Discover -> Viz: A grid of detailed cards with placeholder images, descriptions, and key features, including clickable "Learn More" links. -> Interaction: Users can click buttons to navigate to external product pages. -> Justification: Provides a clear, visual catalog of available hardware, making it easy for users to browse, understand offerings, and access more detailed information. -> Library: HTML/Tailwind, Vanilla JS for dynamic rendering, placehold.co for images. 5. FieldLink Software Link -> Goal: Inform/Direct -> Viz: A prominent call-to-action button within a dedicated section. -> Interaction: User clicks to navigate to an external YouTube playlist. -> Justification: Highlights the critical software component and provides direct access to learning resources. -> Library: HTML/Tailwind. 6. Order Form Link -> Goal: Action/Direct -> Viz: A prominent button within a dedicated section. -> Interaction: User clicks to navigate to an external Google Form. -> Justification: Provides a clear and immediate call to action for customers ready to place an order. -> Library: HTML/Tailwind. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        h1, h2, h3 {
+            font-family: 'Roboto Slab', serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+                max-height: 400px;
+            }
+        }
+        .term-button.active {
+            background-color: #1e3a8a; /* blue-800 */
+            color: #ffffff;
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px 0 rgb(0 0 0 / 10%);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Hensel Phelps</h1>
+            <h2 class="hidden sm:block text-xl font-semibold text-blue-800">HaaS Offering</h2>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-12">
+
+        <section id="intro" class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4 text-slate-900">Building Your Future, Tool by Tool</h2>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600">
+                Our new Hardware as a Service (HaaS) offering is designed to provide you with cutting-edge equipment, ensuring your projects run smoothly and efficiently, without the heavy upfront investment. Think of it as having a constantly updated, perfectly maintained toolkit, always ready for your next big build.
+            </p>
+        </section>
+
+        <section id="calculator" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg mb-12 md:mb-16">
+            <h3 class="text-2xl md:text-3xl font-bold text-center mb-2 text-slate-900">Configure Your Term & Benefits</h3>
+            <p class="text-center text-slate-600 mb-8">Select a term length and hardware to see the corresponding training hours and monthly price.</p>
+            
+            <div id="term-selector" class="flex flex-wrap justify-center gap-3 md:gap-4 mb-8">
+            </div>
+
+            <div class="mb-8 flex justify-center">
+                <label for="hardware-select" class="sr-only">Select Hardware</label>
+                <select id="hardware-select" class="block w-full max-w-sm px-4 py-2 rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                </select>
+            </div>
+
+            <div class="grid md:grid-cols-5 gap-8 items-center">
+                <div class="md:col-span-2 bg-slate-100 p-6 rounded-xl border border-slate-200">
+                    <h4 class="text-lg font-bold text-slate-900 mb-3">Your Selection</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-sm font-medium text-slate-500">Selected Hardware</p>
+                            <p id="selected-hardware-name" class="text-xl font-bold text-blue-800">Premium X9 with T10x-2024</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-500">Term Length</p>
+                            <p id="selected-term" class="text-2xl font-bold text-blue-800">12 Months</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-500">In-Field Training</p>
+                            <p id="training-hours" class="text-2xl font-bold text-blue-800">8 Hours</p>
+                        </div>
+                         <div>
+                            <p class="text-sm font-medium text-slate-500">Monthly Price</p>
+                            <p id="monthly-price" class="text-2xl font-bold text-blue-800">$2,600.00</p>
+                        </div>
+                         <div>
+                            <p class="text-sm font-medium text-slate-500">Commitment</p>
+                            <p id="commitment-note" class="text-md font-medium text-slate-700">You are committed to the full chosen term.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:col-span-3">
+                    <div class="chart-container">
+                        <canvas id="trainingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="mb-12 md:mb-16">
+            <h3 class="text-3xl font-bold text-center mb-8 md:mb-10 text-slate-900">The Blueprint of Your Service</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-600 transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-3xl mb-3">🔄</div>
+                    <h4 class="font-bold text-xl mb-2 text-slate-900">"Hot Swap" Program</h4>
+                    <p class="text-slate-600">No downtime. We provide immediate replacement equipment for any units needing repairs or calibration, keeping your project on schedule.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-600 transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-3xl mb-3">⚙️</div>
+                    <h4 class="font-bold text-xl mb-2 text-slate-900">Calibrated Equipment</h4>
+                    <p class="text-slate-600">Receive equipment in perfect working order, fully calibrated and ready for the job site from day one.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-600 transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-3xl mb-3">💻</div>
+                    <h4 class="font-bold text-xl mb-2 text-slate-900">Premium Hardware Options</h4>
+                    <p class="text-slate-600">Explore our range of premium hardware, including the X9 model paired with the T10x-2024 tablet. See below for more details.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-600 transform hover:scale-105 transition-transform duration-300">
+                     <div class="text-3xl mb-3">📈</div>
+                    <h4 class="font-bold text-xl mb-2 text-slate-900">Technology Assurance</h4>
+                    <p class="text-slate-600">Benefit from continuous technology updates through our partners' natural rental fleet refresh cycles, keeping your toolkit modern.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-600 transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-3xl mb-3">🎓</div>
+                    <h4 class="font-bold text-xl mb-2 text-slate-900">Complimentary Training</h4>
+                    <p class="text-slate-600">In addition to in-field hours, we offer complimentary classroom training in various regions to ensure your team is proficient.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-600 transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-3xl mb-3">📄</div>
+                    <h4 class="font-bold text-xl mb-2 text-slate-900">Existing Contracts</h4>
+                    <p class="text-slate-600">This HaaS offering is a new, flexible option. Your current contracts, rentals, and flex leases remain completely separate and unaffected.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="software-ecosystem" class="mb-12 md:mb-16">
+            <h3 class="text-3xl font-bold text-center mb-8 md:mb-10 text-slate-900">Software Ecosystem: Powering Your Hardware</h3>
+            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-6 rounded-r-lg shadow-md flex flex-col items-center text-center">
+                <div class="py-1"><div class="text-4xl mb-4">🚀</div></div>
+                <p class="font-bold text-xl mb-4">Trimble FieldLink: The Brains Behind the Build</p>
+                <p class="text-blue-800 mb-6 max-w-2xl">
+                    Trimble FieldLink is the primary software that seamlessly integrates and runs all your HaaS hardware, providing intuitive workflows for layout, scanning, and data management. Explore its capabilities and see how it revolutionizes your on-site operations.
+                </p>
+                <a href="https://www.youtube.com/playlist?list=PL5K40czb7kZpsoY1IaJ0O_84xeXwmPn-x" target="_blank" rel="noopener noreferrer" class="inline-block bg-red-600 text-white font-semibold py-3 px-8 rounded-full text-lg shadow-lg hover:bg-red-700 transition-colors duration-300 transform hover:scale-105">
+                    Watch FieldLink in Action on YouTube ▶️
+                </a>
+            </div>
+        </section>
+
+        <section id="hardware-options" class="mb-12 md:mb-16">
+            <h3 class="text-3xl font-bold text-center mb-8 md:mb-10 text-slate-900">Explore Our Hardware Fleet</h3>
+            <p class="max-w-3xl mx-auto text-center text-lg text-slate-600 mb-8">Discover the robust equipment available through our HaaS program, each designed to meet the rigorous demands of your construction projects.</p>
+            <div id="hardware-cards-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                <!-- Hardware cards will be dynamically inserted here -->
+            </div>
+        </section>
+
+        <section id="order-placement" class="mb-12 md:mb-16">
+            <h3 class="text-3xl font-bold text-center mb-8 md:mb-10 text-slate-900">Ready to Build? Place Your Order!</h3>
+            <div class="bg-green-50 border-l-4 border-green-500 text-green-900 p-6 rounded-r-lg shadow-md flex flex-col items-center text-center">
+                <div class="py-1"><div class="text-4xl mb-4">📝</div></div>
+                <p class="font-bold text-xl mb-4">Start Your HaaS Journey Today</p>
+                <p class="text-green-800 mb-6 max-w-2xl">
+                    Ready to equip your team with the latest hardware and unlock unparalleled efficiency? Click the button below to fill out our order form and get started with your Hensel Phelps HaaS offering.
+                </p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScyX_EGMJY1QRUrHVvZrhes4Jc45lQFqlSA0QSzVnaEHn0XUw/viewform" target="_blank" rel="noopener noreferrer" class="inline-block bg-green-700 text-white font-semibold py-3 px-8 rounded-full text-lg shadow-lg hover:bg-green-800 transition-colors duration-300 transform hover:scale-105">
+                    Go to Order Form
+                </a>
+            </div>
+        </section>
+
+        <section id="considerations">
+             <h3 class="text-3xl font-bold text-center mb-8 text-slate-900">Important Considerations</h3>
+            <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-6 rounded-r-lg shadow-md">
+                 <div class="flex">
+                    <div class="py-1"><div class="text-2xl mr-4">🛡️</div></div>
+                    <div>
+                        <p class="font-bold text-lg">Insurance Recommendation</p>
+                        <p class="text-amber-800">Our HaaS program covers general hardware failures from normal use. However, it does not cover accidental damage. We strongly recommend that Hensel Phelps secure its own insurance to protect against unforeseen on-site incidents.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-300 mt-12 md:mt-16">
+        <div class="container mx-auto px-6 py-4 text-center">
+            <p>&copy; 2025 Hensel Phelps. All rights reserved. HaaS Offering Summary.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const termsData = [
+                { months: 6, years: 0.5, training: 4 },
+                { months: 12, years: 1, training: 8 },
+                { months: 24, years: 2, training: 16 },
+                { months: 36, years: 3, training: 24 },
+                { months: 48, years: 4, training: 32 },
+                { months: 60, years: 5, training: 40 }
+            ];
+
+            const hardwareOptionsData = [
+                {
+                    id: 'x9-t10x',
+                    name: 'Premium X9 with T10x-2024',
+                    description: 'The flagship model for superior performance and seamless integration, ideal for demanding tasks.',
+                    image_text: 'X9 + T10x Tablet',
+                    url: 'https://geospatial.trimble.com/en/products/hardware/trimble-x9',
+                    features: [
+                        'High-precision surveying',
+                        'Ruggedized for harsh environments',
+                        'Long-lasting battery life',
+                        'Optimized for field data collection'
+                    ],
+                    pricing: {
+                        '6': 4370.00,
+                        '12': 3900.00,
+                        '24': 3525.00,
+                        '36': 3150.00,
+                        '48': 2775.00, // Interpolated
+                        '60': 2400.00  // Interpolated
+                    }
+                },
+                {
+                    id: 'trimble-x9',
+                    name: 'Trimble X9 3D Laser Scanner',
+                    description: 'A versatile and powerful 3D laser scanning system with enhanced performance and function, designed for fast, accurate, and reliable data capture in challenging environments.',
+                    image_text: 'Trimble X9 3D Laser Scanner',
+                    url: 'https://geospatial.trimble.com/en/products/hardware/trimble-x9',
+                    features: [
+                        'Self-calibrating for dependable data every scan',
+                        'Survey-grade self-leveling for fast, easy setup',
+                        'IP55 environmental protection against dust and water',
+                        'Fast scan times (less than 1 minute for some projects)',
+                        'Up to 150m range',
+                        'High-speed scanning up to 1 million pts/s',
+                        'Enhanced sensitivity for dark or shiny surfaces',
+                        'Flexible operation with tablet, phone, or one-button workflow'
+                    ],
+                    pricing: {
+                        '6': 2910.00,
+                        '12': 2600.00,
+                        '24': 2330.00,
+                        '36': 2060.00,
+                        '48': 1790.00, // Interpolated
+                        '60': 1520.00  // Interpolated
+                    }
+                },
+                {
+                    id: 'trimble-rts773',
+                    name: 'Trimble RTS773 Robotic Total Station',
+                    description: 'A robotic total station incorporating advanced technologies for fast, accurate, and reliable layout, ensuring design intent is executed correctly.',
+                    image_text: 'RTS773',
+                    url: 'https://fieldtech.trimble.com/resources/product-guides-brochures-datasheets/trimble-rts773-datasheet',
+                    features: [
+                        'Trimble VISION™ for remote viewing',
+                        'Trimble MagDrive™ Servo Technology for speed and accuracy',
+                        'Trimble SurePoint™ Technology for automatic movement correction',
+                        'Accurate and reliable layout'
+                    ],
+                    pricing: {
+                        '6': 2095.00,
+                        '12': 1870.00,
+                        '24': 1690.00,
+                        '36': 1510.00,
+                        '48': 1330.00, // Interpolated
+                        '60': 1150.00  // Interpolated
+                    }
+                },
+                {
+                    id: '873',
+                    name: '873 Machine Control System',
+                    description: 'An advanced machine control system for precise grading and excavation, enhancing productivity and accuracy on site.',
+                    image_text: '873 System',
+                    url: 'https://placehold.co/link/873',
+                    features: [
+                        'Real-time position updates',
+                        'Intuitive operator interface',
+                        'Compatible with various heavy equipment',
+                        'Reduces rework and material costs'
+                    ],
+                    pricing: {
+                        '6': 2395.00,
+                        '12': 2140.00,
+                        '24': 1930.00,
+                        '36': 1720.00,
+                        '48': 1510.00, // Interpolated
+                        '60': 1300.00  // Interpolated
+                    }
+                },
+                {
+                    id: 'rover',
+                    name: 'Rover GPS System',
+                    description: 'Portable and highly accurate GPS system for field data collection and stakeout tasks.',
+                    image_text: 'Rover GPS',
+                    url: 'https://placehold.co/link/rover',
+                    features: [
+                        'Sub-centimeter accuracy',
+                        'Lightweight and easy to deploy',
+                        'Long battery life for extended use',
+                        'Integrated with field software'
+                    ],
+                    pricing: {
+                        '6': 1490.00,
+                        '12': 1330.00,
+                        '24': 1210.00,
+                        '36': 1090.00,
+                        '48': 970.00,  // Interpolated
+                        '60': 850.00   // Interpolated
+                    }
+                },
+                {
+                    id: 'base-rover',
+                    name: 'Base Rover System',
+                    description: 'A complete base and rover RTK system for high-precision surveying and construction layout.',
+                    image_text: 'Base Rover',
+                    url: 'https://placehold.co/link/baserover',
+                    features: [
+                        'Robust RTK performance',
+                        'Fast and reliable initialization',
+                        'Ideal for complex site layouts',
+                        'Enhanced signal tracking'
+                    ],
+                    pricing: {
+                        '6': 2245.00,
+                        '12': 2005.00,
+                        '24': 1810.00,
+                        '36': 1615.00,
+                        '48': 1420.00, // Interpolated
+                        '60': 1225.00  // Interpolated
+                    }
+                }
+            ];
+
+            const termSelector = document.getElementById('term-selector');
+            const selectedTermEl = document.getElementById('selected-term');
+            const trainingHoursEl = document.getElementById('training-hours');
+            const monthlyPriceEl = document.getElementById('monthly-price');
+            const hardwareSelect = document.getElementById('hardware-select');
+            const selectedHardwareNameEl = document.getElementById('selected-hardware-name');
+            const chartCanvas = document.getElementById('trainingChart');
+            const hardwareCardsContainer = document.getElementById('hardware-cards-container');
+            
+            let chart;
+            let currentSelectedTermMonths = 12; // Default selected term
+            let currentSelectedHardwareId = 'x9-t10x'; // Default selected hardware
+
+            const activeColor = 'rgba(30, 58, 138, 1)'; // blue-800
+            const inactiveColor = 'rgba(148, 163, 184, 0.5)'; // slate-400
+            const hoverColor = 'rgba(30, 64, 175, 0.8)'; // blue-700
+
+            function createOrUpdateChart(selectedMonths) {
+                const chartData = {
+                    labels: termsData.map(t => `${t.months} mo`),
+                    datasets: [{
+                        label: 'In-Field Training Hours',
+                        data: termsData.map(t => t.training),
+                        backgroundColor: termsData.map(t => t.months === selectedMonths ? activeColor : inactiveColor),
+                        borderColor: termsData.map(t => t.months === selectedMonths ? activeColor : inactiveColor),
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        hoverBackgroundColor: hoverColor
+                    }]
+                };
+
+                const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Training Hours'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (Number.isInteger(value)) {
+                                        return value;
+                                    }
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Term Length'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.raw} hours`;
+                                }
+                            }
+                        }
+                    }
+                };
+
+                if (chart) {
+                    chart.data.datasets[0].backgroundColor = chartData.datasets[0].backgroundColor;
+                    chart.data.datasets[0].borderColor = chartData.datasets[0].borderColor;
+                    chart.update();
+                } else {
+                    chart = new Chart(chartCanvas, {
+                        type: 'bar',
+                        data: chartData,
+                        options: chartOptions
+                    });
+                }
+            }
+            
+            function updateDisplay() {
+                const selectedTerm = termsData.find(t => t.months === currentSelectedTermMonths);
+                const selectedHardware = hardwareOptionsData.find(h => h.id === currentSelectedHardwareId);
+
+                if (selectedTerm && selectedHardware) {
+                    selectedTermEl.textContent = `${selectedTerm.months} Months`;
+                    trainingHoursEl.textContent = `${selectedTerm.training} Hours`;
+                    selectedHardwareNameEl.textContent = selectedHardware.name;
+                    
+                    const price = selectedHardware.pricing[currentSelectedTermMonths.toString()];
+                    monthlyPriceEl.textContent = price ? `$${price.toFixed(2)}` : 'N/A';
+
+                    document.querySelectorAll('.term-button').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (parseInt(btn.dataset.months) === currentSelectedTermMonths) {
+                            btn.classList.add('active');
+                        }
+                    });
+                    
+                    createOrUpdateChart(currentSelectedTermMonths);
+                }
+            }
+
+            function populateHardwareSelect() {
+                hardwareOptionsData.forEach(hardware => {
+                    const option = document.createElement('option');
+                    option.value = hardware.id;
+                    option.textContent = hardware.name;
+                    hardwareSelect.appendChild(option);
+                });
+                hardwareSelect.value = currentSelectedHardwareId; // Set default selection
+            }
+
+            function renderHardwareCards() {
+                hardwareCardsContainer.innerHTML = ''; // Clear existing cards
+                hardwareOptionsData.forEach(hardware => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-600 transform hover:scale-105 transition-transform duration-300 flex flex-col';
+                    
+                    const featuresList = hardware.features.map(feature => `<li class="text-slate-600 text-sm flex items-center"><span class="text-blue-600 mr-2">✓</span>${feature}</li>`).join('');
+
+                    card.innerHTML = `
+                        <div class="w-full h-40 bg-slate-100 rounded-xl mb-4 flex items-center justify-center overflow-hidden">
+                            <img src="https://placehold.co/200x160/e2e8f0/64748b?text=${encodeURIComponent(hardware.image_text)}" alt="${hardware.name}" class="object-cover w-full h-full rounded-xl">
+                        </div>
+                        <h4 class="font-bold text-xl mb-2 text-slate-900">${hardware.name}</h4>
+                        <p class="text-slate-600 mb-4 flex-grow">${hardware.description}</p>
+                        <ul class="list-none p-0 m-0 space-y-1 mb-4">
+                            ${featuresList}
+                        </ul>
+                        <a href="${hardware.url}" target="_blank" rel="noopener noreferrer" class="mt-auto inline-block bg-blue-700 text-white font-semibold py-2 px-4 rounded-full text-center hover:bg-blue-800 transition-colors duration-300">
+                            Learn More
+                        </a>
+                    `;
+                    hardwareCardsContainer.appendChild(card);
+                });
+            }
+
+            termsData.forEach(term => {
+                const button = document.createElement('button');
+                button.textContent = `${term.months} mo`;
+                button.dataset.months = term.months;
+                button.className = 'term-button px-4 py-2 md:px-6 md:py-3 font-semibold text-slate-700 bg-white rounded-full shadow-sm border border-slate-300 transition-all duration-300 hover:bg-slate-100 hover:scale-105';
+                button.addEventListener('click', () => {
+                    currentSelectedTermMonths = term.months;
+                    updateDisplay();
+                });
+                termSelector.appendChild(button);
+            });
+
+            hardwareSelect.addEventListener('change', (event) => {
+                currentSelectedHardwareId = event.target.value;
+                updateDisplay();
+            });
+
+            populateHardwareSelect();
+            updateDisplay(); // Initial display
+            renderHardwareCards();
+        });
+    </script>
+</body>
+</html>
